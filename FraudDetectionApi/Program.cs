@@ -14,6 +14,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 );
 
 builder.Services.AddScoped<ITransactionService, TransactionService>();
+builder.Services.AddScoped<IFraudRuleEngine, FraudRuleEngine>();
 
 var app = builder.Build();
 

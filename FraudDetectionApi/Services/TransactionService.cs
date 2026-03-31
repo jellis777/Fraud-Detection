@@ -1,5 +1,3 @@
-
-
 using FraudDetectionApi.Data;
 using FraudDetectionApi.Dtos;
 using FraudDetectionApi.Enums;
@@ -14,60 +12,68 @@ namespace FraudDetectionApi.Services
     {
 
         private readonly AppDbContext _context;
+        private readonly IFraudRuleEngine _fraudRuleEngine;
+        private readonly ILogger<TransactionService> _logger;
         private static readonly HashSet<string> BlockedCountries = new(StringComparer.OrdinalIgnoreCase)
         {
             "North Korea",
             "Iran"
         };
 
-        public TransactionService(AppDbContext context)
+        public TransactionService(AppDbContext context, IFraudRuleEngine fraudRuleEngine, ILogger<TransactionService> logger)
         {
             _context = context;
+            _fraudRuleEngine = fraudRuleEngine;
+            _logger = logger;
         }
-        public async Task<Transaction> CreateTransactionAsync(CreateTransactionDto dto)
+        public async Task<TransactionResponseDto> CreateTransactionAsync(CreateTransactionDto dto)
         {
-            var decision = FraudDecision.Approved;
-            var reasons = new List<string>();
+            _logger.LogInformation(
+                "Received transaction for account {AccountId}, amount {Amount}, country {Country}, merchant {Merchant}",
+                dto.AccountId,
+                dto.Amount,
+                dto.Country,
+                dto.Merchant);
 
-            if (dto.Amount > 5000)
-            {
-                decision = FraudDecision.Suspicious;
-                reasons.Add("Amount exceeds suspicious threshold.");
-            }
 
-            if (!string.Equals(dto.Country, dto.AccountHomeCountry, StringComparison.OrdinalIgnoreCase))
-            {
-                if (decision != FraudDecision.Fraud)
-                {
-                    decision = FraudDecision.Suspicious;
-                }
-                reasons.Add("Transaction originated outside account home country.");
-            }
-
-            if (dto.Amount > 10000)
-            {
-                decision = FraudDecision.Fraud;
-                reasons.Add("Amount exceeds fraud threshold.");
-            }
-
-            if (BlockedCountries.Contains(dto.Country))
-            {
-                decision = FraudDecision.Fraud;
-                reasons.Add("Transaction originated from blocked country.");
-            }
-
-            var oneMinuteAgo = dto.OccuredAt.AddMinutes(-1);
+            var oneMinuteAgo = dto.OccurredAt.AddMinutes(-1);
 
             var recentCount = await _context.Transactions.CountAsync(t =>
             t.AccountId == dto.AccountId &&
-            t.OccuredAt >= oneMinuteAgo &&
-            t.OccuredAt <= dto.OccuredAt);
+            t.OccurredAt >= oneMinuteAgo &&
+            t.OccurredAt <= dto.OccurredAt);
 
-            if (recentCount >= 3)
+            _logger.LogInformation(
+                "Found {RecentCount} recent transactions for account {AccountId} in the last minute",
+                recentCount,
+                dto.AccountId
+            );
+
+            var evaluation = _fraudRuleEngine.Evaluate(dto, recentCount);
+
+            if (evaluation.Decision == FraudDecision.Suspicious)
             {
-                decision = FraudDecision.Fraud;
-                reasons.Add("Too many recent transactions for this account.");
+                _logger.LogWarning(
+                    "Transaction for account {AccountId} marked suspicious. Reasons: {Reasons}",
+                    dto.AccountId,
+                    string.Join(" | ", evaluation.Reasons)
+                );
             }
+            else if (evaluation.Decision == FraudDecision.Fraud)
+            {
+                _logger.LogWarning(
+                    "Transaction for account {AccountId} marked as fraud. Reasons: {Reasons}",
+                    dto.AccountId,
+                    string.Join(" | ", evaluation.Reasons)
+                );
+            }
+
+            _logger.LogInformation(
+                "Fraud evaluation completed for account {AccountId}. Decision: {Decision}. Reasons: {Reasons}",
+                dto.AccountId,
+                evaluation.Decision,
+                string.Join(" | ", evaluation.Reasons)
+            );
 
             var transaction = new Transaction
             {
@@ -75,29 +81,57 @@ namespace FraudDetectionApi.Services
                 Amount = dto.Amount,
                 Country = dto.Country,
                 Merchant = dto.Merchant,
-                OccuredAt = dto.OccuredAt,
-                Decision = decision,
-                Reason = reasons.Count > 0 ? string.Join(" ", reasons) : "Transaction approved.",
+                OccurredAt = dto.OccurredAt,
+                Decision = evaluation.Decision,
+                Reason = string.Join(" ", evaluation.Reasons),
                 CreatedAt = DateTime.UtcNow
             };
+
+            _logger.LogInformation(
+                "Transaction {TransactionId} saved successfully for account {AccountId} with decision {Decision}",
+                transaction.Id,
+                transaction.AccountId,
+                transaction.Decision
+            );
 
             _context.Transactions.Add(transaction);
             await _context.SaveChangesAsync();
 
-            return transaction;
+            return MapToDto(transaction);
         }
 
-        public async Task<List<Transaction>> GetAllTransactionsAsync()
+        public async Task<List<TransactionResponseDto>> GetAllTransactionsAsync()
         {
-            return await _context.Transactions
+            var transactions = await _context.Transactions
             .OrderByDescending(t => t.CreatedAt)
             .ToListAsync();
-            ;
+
+
+            return transactions.Select(MapToDto).ToList();
         }
 
-        public async Task<Transaction?> GetTransactionByIdAsync(int id)
+        public async Task<TransactionResponseDto?> GetTransactionByIdAsync(int id)
         {
-            return await _context.Transactions.FindAsync(id);
+            var transaction = await _context.Transactions.FindAsync(id);
+
+            if (transaction == null) return null;
+
+            return MapToDto(transaction);
+        }
+
+        private static TransactionResponseDto MapToDto(Transaction t)
+        {
+            return new TransactionResponseDto
+            {
+                Id = t.Id,
+                AccountId = t.AccountId,
+                Amount = t.Amount,
+                Country = t.Country,
+                Merchant = t.Merchant,
+                OccurredAt = t.OccurredAt,
+                Decision = t.Decision,
+                Reason = t.Reason
+            };
         }
 
     }

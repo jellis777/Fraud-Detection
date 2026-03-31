@@ -17,7 +17,7 @@ namespace FraudDetectionApi.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateTransaction(CreateTransactionDto dto)
+        public async Task<IActionResult> CreateTransaction([FromBody] CreateTransactionDto dto)
         {
             var transaction = await _transactionService.CreateTransactionAsync(dto);
             return CreatedAtAction(nameof(GetTransactionById), new { id = transaction.Id }, transaction);

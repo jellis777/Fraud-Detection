@@ -10,7 +10,7 @@ namespace FraudDetectionApi.Models
         public decimal Amount { get; set; }
         public string Country { get; set; } = string.Empty;
         public string Merchant { get; set; } = string.Empty;
-        public DateTime OccuredAt { get; set; }
+        public DateTime OccurredAt { get; set; }
         public FraudDecision Decision { get; set; }
         public string Reason { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

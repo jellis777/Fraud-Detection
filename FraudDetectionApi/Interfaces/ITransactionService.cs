@@ -6,8 +6,8 @@ namespace FraudDetectionApi.Interfaces
 {
     public interface ITransactionService
     {
-        Task<Transaction> CreateTransactionAsync(CreateTransactionDto dto);
-        Task<List<Transaction>> GetAllTransactionsAsync();
-        Task<Transaction?> GetTransactionByIdAsync(int id);
+        Task<TransactionResponseDto> CreateTransactionAsync(CreateTransactionDto dto);
+        Task<List<TransactionResponseDto>> GetAllTransactionsAsync();
+        Task<TransactionResponseDto?> GetTransactionByIdAsync(int id);
     }
 }

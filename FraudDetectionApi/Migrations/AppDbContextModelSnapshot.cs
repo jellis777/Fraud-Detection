@@ -51,7 +51,7 @@ namespace FraudDetectionApi.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("OccuredAt")
+                    b.Property<DateTime>("OccurredAt")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Reason")
