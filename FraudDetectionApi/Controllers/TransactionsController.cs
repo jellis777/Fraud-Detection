@@ -19,8 +19,16 @@ namespace FraudDetectionApi.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateTransaction([FromBody] CreateTransactionDto dto)
         {
-            var transaction = await _transactionService.CreateTransactionAsync(dto);
-            return CreatedAtAction(nameof(GetTransactionById), new { id = transaction.Id }, transaction);
+            try
+            {
+                var transaction = await _transactionService.CreateTransactionAsync(dto);
+                return CreatedAtAction(nameof(GetTransactionById), new { id = transaction.Id }, transaction);
+
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "An unexpected error occurred while creating the transaction." });
+            }
         }
 
         [HttpGet]
@@ -43,6 +51,28 @@ namespace FraudDetectionApi.Controllers
             return Ok(transaction);
         }
 
+        [HttpDelete("{id:int}")]
+        public async Task<IActionResult> DeleteTransaction(int id)
+        {
+            try
+            {
 
+                var deleted = await _transactionService.DeleteTransactionAsync(id);
+
+                if (!deleted)
+                {
+                    return NotFound(new { message = "Transaction not found." });
+                }
+
+                return NoContent();
+
+            }
+            catch
+            {
+                return StatusCode(500, new { message = "An unexpected error occurred while deleting the transaction." });
+            }
+
+
+        }
     }
 }

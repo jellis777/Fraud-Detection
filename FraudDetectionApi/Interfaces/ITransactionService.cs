@@ -9,5 +9,6 @@ namespace FraudDetectionApi.Interfaces
         Task<TransactionResponseDto> CreateTransactionAsync(CreateTransactionDto dto);
         Task<List<TransactionResponseDto>> GetAllTransactionsAsync();
         Task<TransactionResponseDto?> GetTransactionByIdAsync(int id);
+        Task<bool> DeleteTransactionAsync(int id);
     }
 }

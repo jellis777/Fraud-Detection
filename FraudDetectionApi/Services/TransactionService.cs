@@ -119,6 +119,27 @@ namespace FraudDetectionApi.Services
             return MapToDto(transaction);
         }
 
+        public async Task<bool> DeleteTransactionAsync(int id)
+        {
+            var transaction = await _context.Transactions.FindAsync(id);
+
+            if (transaction is null)
+            {
+                return false;
+            }
+
+            _context.Transactions.Remove(transaction);
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation(
+                "Transaction {TransactionId} deleted successfully for account {AccountId}",
+                transaction.Id,
+                transaction.AccountId
+            );
+
+            return true;
+        }
+
         private static TransactionResponseDto MapToDto(Transaction t)
         {
             return new TransactionResponseDto
