@@ -30,21 +30,59 @@ A full-stack application that simulates a fraud detection system by analyzing fi
 - ![Form](docs/1.png)
 - ![Transactions](docs/2.png)
 
-## ⚙️ Running the Project
+## ⚙️ Setup and Run
 
-### Backend
+### 1. Prerequisites
+
+- .NET SDK 10
+- Node.js and npm
+- SQL Server (local or remote)
+
+### 2. Clone Repository
+
+```bash
+git clone https://github.com/jellis777/Fraud-Detection.git
+cd FraudDetectionAPI
+```
+
+### 3. Backend Setup (Dependencies + Secrets + Database)
 
 ```bash
 cd FraudDetectionApi
+dotnet restore
+dotnet user-secrets init
+dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Server=localhost,1433;Database=ClaimDb;User Id=YOUR_SQL_USER;Password=YOUR_SQL_PASSWORD;TrustServerCertificate=True;"
+dotnet ef database update
 dotnet run
 ```
 
-### Frontend
+Notes:
+
+- Use your own SQL credentials. Do not commit real credentials to git.
+- A safe template is available at `FraudDetectionApi/appsettings.Example.json`.
+
+### 4. Frontend Setup
+
+Open a second terminal from repo root:
 
 ```bash
 cd fraud-detection-ui
 npm install
 npm run dev
+```
+
+### 5. Optional Tests
+
+From repo root:
+
+```bash
+dotnet test
+```
+
+From `fraud-detection-ui`:
+
+```bash
+npm run test -- --run
 ```
 
 ## 🔌 API Endpoints
