@@ -160,3 +160,4 @@
 /Users/jeffreyellis/Desktop/New Portfolio/FraudDetectionAPI/FraudDetectionApi/obj/Debug/net10.0/FraudDetectionApi.genruntimeconfig.cache
 /Users/jeffreyellis/Desktop/New Portfolio/FraudDetectionAPI/FraudDetectionApi/obj/Debug/net10.0/ref/FraudDetectionApi.dll
 /Users/jeffreyellis/Desktop/New Portfolio/FraudDetectionAPI/FraudDetectionApi/obj/Debug/net10.0/FraudDetectionApi.sourcelink.json
+/Users/jeffreyellis/Desktop/New Portfolio/FraudDetectionAPI/FraudDetectionApi/bin/Debug/net10.0/appsettings.Example.json
